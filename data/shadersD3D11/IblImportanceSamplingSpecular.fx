@@ -226,7 +226,7 @@ float3 ImportanceSample (float3 R )
             float Dh = specularD(ConvolutionRoughness, NoH);
             float pdf = Dh * NoH / (4*VoH);
             float solidAngleTexel = 4 * PI / (6 * cubeWidth * cubeWidth);
-            float solidAngleSample = 1.0 / (ConvolutionSampleCount * pdf);
+            float solidAngleSample = 1.0 / (ConvolutionSampleCount * pdf / 32);
             float lod = ConvolutionRoughness == 0 ? 0 : 0.5 * log2((float)(solidAngleSample/solidAngleTexel));
 
             float3 hdrPixel = rescaleHDR(ConvolutionSrc.SampleLevel(EnvMapSampler, L, lod).rgb);

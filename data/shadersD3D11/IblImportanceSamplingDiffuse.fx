@@ -213,7 +213,7 @@ float3 ImportanceSample (float3 N)
             float pdf = max(0.0, dot(N, L) * INV_PI);
             
             float solidAngleTexel = 4 * PI / (6 * cubeWidth * cubeWidth);
-            float solidAngleSample = 1.0 / (ConvolutionSampleCount * pdf);
+            float solidAngleSample = 1.0 / (ConvolutionSampleCount * pdf / 16);
             float lod = 0.5 * log2((float)(solidAngleSample / solidAngleTexel));
 
             float3 diffuseSample = rescaleHDR(ConvolutionSrc.SampleLevel(EnvMapSampler, H, lod).rgb );
