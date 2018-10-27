@@ -716,11 +716,11 @@ IBLApplication::saveImages(const std::string& filePathName, bool gameOnly)
             std::string brdfLUTPath = pathName + fileNameBase + "Brdf.dds";
 
             LOG("Saving RGBM MDR diffuse to " << diffuseMDRPath);
-            probe->diffuseCubeMapMDR()->save(diffuseMDRPath, true /* fix seams */, false /* split to RGB MMM */);
+            probe->diffuseCubeMapMDR()->save(diffuseMDRPath, false /* fix seams */, false /* split to RGB MMM */);
             LOG("Saving RGBM MDR specular to " << specularMDRPath);
-            probe->specularCubeMapMDR()->save(specularMDRPath, true /* fix seams */, false /* split to RGB MMM */);
+            probe->specularCubeMapMDR()->save(specularMDRPath, false /* fix seams */, false /* split to RGB MMM */);
             LOG("Saving RGBM MDR environment to " << envMDRPath);
-            probe->environmentCubeMapMDR()->save(envMDRPath, true /* fix seams */, false /* split to RGB MMM */);
+            probe->environmentCubeMapMDR()->save(envMDRPath, false /* fix seams */, false /* split to RGB MMM */);
 
 
             // Save the brdf too.
@@ -730,13 +730,13 @@ IBLApplication::saveImages(const std::string& filePathName, bool gameOnly)
 // This operation on a 2k floating point cubemap with a full mip chain blows
 // through remaining addressable memory on 32bit.
 #if _64BIT
-            probe->environmentCubeMap()->save(envHDRPath, true, false);
+            probe->environmentCubeMap()->save(envHDRPath, false, false);
 #endif
             LOG ("Saving HDR diffuse to " << diffuseHDRPath);
-            probe->diffuseCubeMap()->save(diffuseHDRPath, true, false);
+            probe->diffuseCubeMap()->save(diffuseHDRPath, false, false);
 
             LOG ("Saving HDR specular to " << specularHDRPath);
-            probe->specularCubeMap()->save(specularHDRPath, true, false);
+            probe->specularCubeMap()->save(specularHDRPath, false, false);
 
             return true;
         }
