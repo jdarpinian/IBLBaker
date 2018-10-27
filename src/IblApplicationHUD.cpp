@@ -63,7 +63,7 @@ namespace Ctr
 IBLApplicationHUD* IBLApplicationHUD::_applicationHud = 0;
 
 BOOL selectFilenameLoad(LPWSTR filename, 
-    LPWSTR filter)
+    LPWSTR filter, bool multi = false, size_t filename_size = MAX_FILE_PATH_NAME)
 {
     OPENFILENAME ofn;       // common dialog box structure
     WCHAR dirName[MAX_FILE_PATH_NAME];
@@ -75,14 +75,14 @@ BOOL selectFilenameLoad(LPWSTR filename,
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = nullptr;
     ofn.lpstrFile = filename;
-    ofn.nMaxFile = MAX_FILE_PATH_NAME;
+    ofn.nMaxFile = filename_size;
     ofn.lpstrFilter = filter; 
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = nullptr;
     ofn.nMaxFileTitle = 0;
     ofn.lpstrInitialDir = nullptr;
     ofn.lpstrFileTitle = L"Open File";
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | (multi ? OFN_ALLOWMULTISELECT | OFN_EXPLORER : 0);
 
     _wgetcwd(dirName, MAX_FILE_PATH_NAME);
     fileOpenStatus = ::GetOpenFileName(&ofn);
@@ -395,10 +395,12 @@ IBLApplicationHUD::render(const Ctr::Camera* camera)
     int32_t width = _deviceInterface->backbuffer()->width();
     int32_t height = _deviceInterface->backbuffer()->height();
 
+    std::function<void()> loadFunction;
+
     if (_uiVisible)
     {
         Ctr::Vector2i imguiWindowMin(10, 10);
-        Ctr::Vector2i imguiWindowMax = imguiWindowMin + Ctr::Vector2i(width / 5, height - 50);
+        Ctr::Vector2i imguiWindowMax = imguiWindowMin + Ctr::Vector2i(width / 4, height - 50);
         Ctr::Region2i imguiWindowBounds(imguiWindowMin, imguiWindowMax);
         _inputState->setHasGUIFocus(imguiWindowBounds.intersects(Ctr::Vector2i(_inputState->_cursorPositionX, _inputState->_cursorPositionY)));
 
@@ -421,6 +423,36 @@ IBLApplicationHUD::render(const Ctr::Camera* camera)
                 std::string  filePathName(inputString.begin(), inputString.end());
 
                 _iblApplication->loadEnvironment(std::string(filePathName.c_str()));
+            }
+        }
+        if (imguiButton("Convert multiple"))
+        {
+            LOG("Converting multiple");
+            static const int MAX_FILES = 1000;
+            std::vector<WCHAR> selectedFilePathName(MAX_FILE_PATH_NAME * MAX_FILES, 0);
+            WCHAR * filter = L"All\0*.*\0Text\0*.TXT\0";
+
+            if (selectFilenameLoad(selectedFilePathName.data(), filter, true, selectedFilePathName.size() - 1)) {
+                std::wstring dir(selectedFilePathName.data());
+                std::vector<std::wstring> filenames;
+                if (0 == *(selectedFilePathName.data() + dir.length() + 1)) {
+                  filenames.emplace_back(std::move(dir));
+                } else {
+                  _wchdir(dir.c_str());
+                  for (WCHAR *filename = selectedFilePathName.data() + dir.length() + 1; *filename != 0;) {
+                    filenames.emplace_back(filename);
+                    filename += filenames.back().length() + 1;
+                  }
+                }
+                loadFunction = [this, filenames = std::move(filenames)](){
+                  for (auto &filename : filenames) {
+                    std::string sFilename = std::string(filename.begin(), filename.end());
+                    this->_iblApplication->loadEnvironment(sFilename.c_str());
+                    this->_iblApplication->renderIbl();
+                    this->_iblApplication->compute();
+                    this->_iblApplication->saveImages(sFilename.c_str());
+                  }
+                };
             }
         }
         if (imguiButton("Save Environment"))
@@ -637,6 +669,7 @@ IBLApplicationHUD::render(const Ctr::Camera* camera)
     }
 
     RenderHUD::render(camera);
+    if (loadFunction) loadFunction();
 }
 
 

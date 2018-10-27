@@ -132,6 +132,7 @@ class IBLApplication : public Ctr::Application
     void                       pause();
     void                       cancel();
     void                       compute();
+    void                       renderIbl();
 
 
     Entity*                    visualizedEntity();

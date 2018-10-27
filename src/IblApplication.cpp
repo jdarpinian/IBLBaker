@@ -583,7 +583,7 @@ IBLApplication::updateApplication()
     _device->clearSurfaces (0, Ctr::CLEAR_TARGET | Ctr::CLEAR_ZBUFFER|Ctr::CLEAR_STENCIL, 
                                 clearColor.x, clearColor.y, clearColor.z, clearColor.w);
     if (!_inputMgr->inputState()->leftMouseDown())
-        _iblRenderPass->render(_scene);
+        renderIbl();
 
 
      // Camera input.
@@ -599,6 +599,12 @@ IBLApplication::updateApplication()
 
 	// Present to back buffre
     _device->present();
+}
+
+void
+IBLApplication::renderIbl()
+{
+    _iblRenderPass->render(_scene);
 }
 
 bool
@@ -687,8 +693,7 @@ IBLApplication::saveImages(const std::string& filePathName, bool gameOnly)
             pathEnd = filePathName.rfind("\\");
             if (pathEnd == std::string::npos)
             {
-                LOG ("Failed to find path end in " << filePathName);
-                return false;
+              pathEnd = 0;
             }
         }
         size_t extension = filePathName.rfind(".");
